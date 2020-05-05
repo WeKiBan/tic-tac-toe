@@ -9,10 +9,10 @@ const CreatePlayers = function (symbol) {
   
   
   // return and update score and return symbol functions for each player
-  var score = 0;
-  const getScore = () => score;
-  const resetScore = () => score = 0;
-  const updateScore = () => score++
+  var _score = 0;
+  const getScore = () => _score;
+  const resetScore = () => _score = 0;
+  const updateScore = () => _score++
   const getSymbol = () => symbol
 
   return { resetScore, getSymbol, getScore, updateScore };
@@ -117,18 +117,18 @@ const gamePlay = (() => {
   
 
   // variable to see if round has finished and to reset it to incomplete
-  var roundIsIncomplete = true;
-  const isRoundIncomplete = () => roundIsIncomplete;
-  const setRoundIncomplete = () => roundIsIncomplete = true;
+  var _roundIsIncomplete = true;
+  const isRoundIncomplete = () => _roundIsIncomplete;
+  const setRoundIncomplete = () => _roundIsIncomplete = true;
 
 
 
   // each turn updates the gameboard then checks to see if there is a win before rendering the display
   const takeTurn = (e) => {
 
-    var squareLocation = e.target.dataset.sq;
+    var _squareLocation = e.target.dataset.sq;
 
-    GameBoard.updateGameBoard(squareLocation, _currentTurn.getSymbol());
+    GameBoard.updateGameBoard(_squareLocation, _currentTurn.getSymbol());
     checkForWin();
     DisplayController.renderBoard();
     updateCurrentTurn();
@@ -153,7 +153,7 @@ const gamePlay = (() => {
       if (combination.every(item => item === combination[0] && item !== "")) {
         _currentTurn.updateScore();
         DisplayController.removeListeners();
-        roundIsIncomplete = false;
+        _roundIsIncomplete = false;
       };
     });
   }
