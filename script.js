@@ -2,11 +2,7 @@
 const squares = Array.from(document.querySelectorAll('.square'));
 
 
-
-
-// factory function to create the players
 const CreatePlayers = function (symbol) {
-  
   
   // return and update score and return symbol functions for each player
   var _score = 0;
@@ -100,8 +96,6 @@ const DisplayController = (() => {
 
   return { removeListeners, addListeners, renderBoard }
 })();
-
-
 
 
 

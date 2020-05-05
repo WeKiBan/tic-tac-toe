@@ -1,2 +1,2 @@
-# tick-tack-toe
-Tick-Tack-Toe Project from the Odin project curriculum.
+# tic-tac-toe
+Tic-Tac-Toe Project from the Odin project curriculum.
