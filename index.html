@@ -7,19 +7,77 @@
     <title>Tick Tack Toe Project</title>
     <link rel="stylesheet" href="reset.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://kit.fontawesome.com/366e86972c.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <div id="page-container">
-        <h1 id="title">Tick-Tack-Toe</h1>
-        <div id="game-board">
+    <div class="page-container">
+        
+        <h1 class="title">Tick-Tac-Toe</h1>
+        
+        <div class="gameboard-container">
+            
+            <div class="score-container">
+                <p class="player-one-name-display"></p>
+                <p class="player-one-score score-num"></p>
+            </div>
+            
+            <div class="gameboard">
+                <div class="square" data-sq='0'></div>
+                <div class="square" data-sq='1'></div>
+                <div class="square" data-sq='2'></div>
+                <div class="square" data-sq='3'></div>
+                <div class="square" data-sq='4'></div>
+                <div class="square" data-sq='5'></div>
+                <div class="square" data-sq='6'></div>
+                <div class="square" data-sq='7'></div>
+                <div class="square" data-sq='8'></div>
+
+            </div>
+            <div class="score-container">
+                <p class="player-two-name-display"></p>
+                <p class="player-two-score score-num"></p>
+            </div>
         </div>
 
-        <div id="button-container">
-            <button id="newGame">New Game</button>
-            <button id="reset">reset</button>
-        </div>
 
+        <div class="button-container">
+            <button class="buttons new-game">New Game</button>
+            <button class="buttons next-game">Next Game</button>
+        </div>
+        
+        <div class="bg-modal">
+            
+            <div class="modal-content">
+                
+                <div class="close">+</div>
+               
+                <h1 class="game-setup-title">Game Setup</h1>
+                
+                <form class="form">
+                    
+                    <div class="radio-container">
+                        <input class="radio" type="radio" id="single" name="players" value="single" checked="checked">
+                        <label for="single">Single-Player</label>
+                        <input class="radio" type="radio" id="multi" name="players" value="multi">
+                        <label for="multi">Multi-Player</label>
+                    </div>
+                    
+                    <div class="name-container">
+                        <i class="fas fa-user left"></i></i><input class="player-one-name-input" type="text" placeholder="Player-One Name">
+                    </div>
+                    
+                    <div class="name-container player-two-container">
+                        <i class="fas fa-user-friends left"></i><input class="player-two-name-input" type="text" placeholder="Player-Two Name">
+                    </div>
+
+                </form>
+                
+                <button class="start-button">Start Game</button>
+            
+            </div>
+       
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

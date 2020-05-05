@@ -1,137 +1,273 @@
+//global query selectors.
+const squares = Array.from(document.querySelectorAll('.square'));
 
-const players = (name, symbol) => {
-  return { name, symbol };
+
+
+
+// factory function to create the players
+const CreatePlayers = function (symbol) {
+  
+  
+  // return and update score and return symbol functions for each player
+  var score = 0;
+  const getScore = () => score;
+  const resetScore = () => score = 0;
+  const updateScore = () => score++
+  const getSymbol = () => symbol
+
+  return { resetScore, getSymbol, getScore, updateScore };
 }
 
-const gameBoard = (() => {
-  const resetButton = document.getElementById('reset')
-  const squares = document.getElementsByClassName('square')
-  let gameBoardArray =
-    ["", "", ""
-      , "", "", "",
-      "", "", ""];
-  resetButton.addEventListener('click', function () {
-    game.result = null;
-    gameBoardArray =
-      ["", "", ""
-        , "", "", "",
-        "", "", ""];
-    Array.from(squares).forEach(element => {
-      element.innerHTML = "";
-    });
-  })
-  const getGameBoardArray = () => gameBoardArray;
-  const updateGame = (squareNum, value) => {
-    gameBoardArray[squareNum] = value;
+
+const GameBoard = (() => {
+
+  var _currentGameBoard = ["", "", "", "", "", "", "", "", ""];
+
+  // returns array of each possible winning combination on the board;
+  const getWinningCombinations = () => [
+    [_currentGameBoard[0], _currentGameBoard[1], _currentGameBoard[2]],
+    [_currentGameBoard[3], _currentGameBoard[4], _currentGameBoard[5]],
+    [_currentGameBoard[6], _currentGameBoard[7], _currentGameBoard[8]],
+    [_currentGameBoard[0], _currentGameBoard[3], _currentGameBoard[6]],
+    [_currentGameBoard[1], _currentGameBoard[4], _currentGameBoard[7]],
+    [_currentGameBoard[2], _currentGameBoard[5], _currentGameBoard[8]],
+    [_currentGameBoard[0], _currentGameBoard[4], _currentGameBoard[8]],
+    [_currentGameBoard[2], _currentGameBoard[4], _currentGameBoard[6]]
+  ]
+
+  // functions to return and reset the board.
+  const getGameBoard = () => _currentGameBoard;
+  const resetGameBoard = () => {
+    _currentGameBoard = ["", "", "", "", "", "", "", "", ""];
+    DisplayController.renderBoard()
   }
-  return {
-    getGameBoardArray,
-    updateGame,
+
+
+  // updates the board after checking if the space in the array is available
+  const updateGameBoard = (locationInArray, symbol) => {
+    if (_currentGameBoard[locationInArray] !== "") return;
+    _currentGameBoard[locationInArray] = symbol;
   }
-})();
 
+  return { getGameBoard, resetGameBoard, updateGameBoard, getWinningCombinations }
 
-const displayController = (() => {
-
-  const grid = document.getElementById('game-board')
-
-  var squareLocation = 0;
-
-  const render = () => {
-
-    gameBoard.getGameBoardArray().forEach(element => {
-      const square = document.createElement('div');
-      square.classList.add('square')
-      square.innerHTML = element;
-
-      square.addEventListener('click', function (e) {
-        let squareNum = e.target.dataset.squareIdNum;
-        if (game.result || gameBoard.getGameBoardArray()[squareNum] !== "") return;
-        e.target.innerHTML = game.getCurrentTurn().symbol;
-        gameBoard.updateGame(squareNum, game.getCurrentTurn().symbol)
-        game.checkForWin();
-        game.setCurrentTurn();
-      })
-
-      square.dataset.squareIdNum = squareLocation;
-      grid.appendChild(square);
-      squareLocation++;
-    })
-  }
-  return {
-    render,
-  }
 })();
 
 
 
-const game = (() => {
 
-  var result;
-  let playerOne = players('Player One', 'O');
-  let playerTwo = players('Player Two', 'X');
-  let currentTurn = playerOne;
-  const getCurrentTurn = () => {
-    return currentTurn
+
+
+const DisplayController = (() => {
+
+  // query selectors for the score display
+  const _playerOneScoreDisplay = document.querySelector(".player-one-score")
+  const _playerTwoScoreDisplay = document.querySelector(".player-two-score")
+  const _NextGameButton = document.querySelector(".next-game");
+
+
+  //function loops through current board array and displays it on the page, then updates the score using the player objects.
+  const renderBoard = () => {
+    for (var i = 0; i < squares.length; i++) {
+      squares[i].innerHTML = GameBoard.getGameBoard()[i];
+    }
+    _playerOneScoreDisplay.innerHTML = gamePlay._playerOne.getScore();
+    _playerTwoScoreDisplay.innerHTML = gamePlay._playerTwo.getScore();
   }
-  const setCurrentTurn = () => {
-    if (currentTurn === playerOne) {
-      currentTurn = playerTwo;
+
+
+  // add event listener to each square to allow players to click board to take turn
+  const addListeners = () => squares.forEach(square => {
+    square.addEventListener('click', gamePlay.takeTurn);
+  });
+
+
+  // remove eventListeners when game is won
+  const removeListeners = () => squares.forEach(square => {
+    square.removeEventListener('click', gamePlay.takeTurn);
+  });
+
+
+  // checks to see if game is finished, if finished resets the board and re-add the event listeners to each square when the next game is started.
+  _NextGameButton.addEventListener('click', function () {
+    if(gamePlay.checkRoundComplete) return;
+    GameBoard.resetGameBoard();
+    DisplayController.addListeners();
+    gamePlay.setRoundIncomplete();
+  });
+
+
+
+  return { removeListeners, addListeners, renderBoard }
+})();
+
+
+
+
+
+
+const gamePlay = (() => {
+
+  // two players saved in objects with scores and symbols attached
+  const _playerOne = CreatePlayers("X");
+  const _playerTwo = CreatePlayers("O");
+
+  // which players turn it currently is
+  var _currentTurn = _playerOne;
+  
+
+  // variable to see if round has finished and to reset it to incomplete
+  var roundIsIncomplete = true;
+  const isRoundIncomplete = () => roundIsIncomplete;
+  const setRoundIncomplete = () => roundIsIncomplete = true;
+
+
+
+  // each turn updates the gameboard then checks to see if there is a win before rendering the display
+  const takeTurn = (e) => {
+
+    var squareLocation = e.target.dataset.sq;
+
+    GameBoard.updateGameBoard(squareLocation, _currentTurn.getSymbol());
+    checkForWin();
+    DisplayController.renderBoard();
+    updateCurrentTurn();
+  }
+
+
+  // updates the players for the next turn.  
+  const updateCurrentTurn = () => {
+    if (_currentTurn === _playerOne) {
+      _currentTurn = _playerTwo;
     } else {
-      currentTurn = playerOne;
+      _currentTurn = _playerOne;
     }
   }
 
+
+  // checks the board for a win if there is a win it updates the score and 
+  // removes the listeners from the board so another turn cannot be played
+  // until the next game begins.
   const checkForWin = () => {
-    let currentBoard = gameBoard.getGameBoardArray();
-    let topRow = currentBoard[0] + currentBoard[1] + currentBoard[2];
-    let middleRow = currentBoard[3] + currentBoard[4] + currentBoard[5];
-    let bottomRow = currentBoard[6] + currentBoard[7] + currentBoard[8];
-    let leftColumn = currentBoard[0] + currentBoard[3] + currentBoard[6];
-    let middleColumn = currentBoard[1] + currentBoard[4] + currentBoard[7];
-    let rightColumn = currentBoard[2] + currentBoard[5] + currentBoard[8];
-    let diagonalOne = currentBoard[0] + currentBoard[4] + currentBoard[8];
-    let diagonalTwo = currentBoard[2] + currentBoard[4] + currentBoard[6];
-    if (topRow === "XXX" || topRow === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (middleRow === "XXX" || middleRow === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (bottomRow === "XXX" || bottomRow === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (leftColumn === "XXX" || leftColumn === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (middleColumn === "XXX" || middleColumn === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (rightColumn === "XXX" || rightColumn === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (diagonalOne === "XXX" || diagonalOne === "OOO") {
-      game.result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (diagonalTwo === "XXX" || diagonalTwo === "OOO") {
-      result = currentTurn.name;
-      console.log(`${currentTurn.name} Wins!`);
-    } else if (currentBoard.join('').length === 9) {
-      result = 'tie';
-      console.log(" It's a Tie");
-    }
-
+    GameBoard.getWinningCombinations().forEach(combination => {
+      if (combination.every(item => item === combination[0] && item !== "")) {
+        _currentTurn.updateScore();
+        DisplayController.removeListeners();
+        roundIsIncomplete = false;
+      };
+    });
   }
-  return { getCurrentTurn, setCurrentTurn, checkForWin, result }
+
+
+  // function to reset the game 
+  const gameReset = () => {
+    _playerOne.resetScore();
+    _playerTwo.resetScore();
+    GameBoard.resetGameBoard();
+    DisplayController.renderBoard();
+  }
+
+  return {setRoundIncomplete, isRoundIncomplete, gameReset, _playerOne, _playerTwo, takeTurn }
 })()
 
 
-displayController.render()
 
 
 
+const GameSetup = (() => {
 
 
+  // query selectors for modal
+  const _newGameButton = document.querySelector('.new-game')
+  const _modal = document.querySelector('.bg-modal');
+  const _form = document.querySelector(".form");
+  const _closeButton = document.querySelector('.close');
+  const _radioButtons = Array.from(document.querySelectorAll('.radio'))
+  const _playerOneNameInput = document.querySelector('.player-one-name-input')
+  const _playerTwoNameInput = document.querySelector('.player-two-name-input')
+  const _playerTwoContainer = document.querySelector(".player-two-container")
+  const _startGameButton = document.querySelector('.start-button')
+
+
+  //selectors for name display in score containers
+  const _playerOneNameDisplay = document.querySelector('.player-one-name-display')
+  const _playerTwoNameDisplay = document.querySelector('.player-two-name-display')
+
+
+  // function to check if game will be multiplayer or single player;
+  var _howManyPlayers = 1;
+  const getHowManyPlayers = () => _howManyPlayers;
+
+
+
+  // function to set the player names in the score containers
+  const setPlayerNames = () => {
+    _playerOneNameDisplay.innerHTML = _playerOneNameInput.value;
+    if (_howManyPlayers === 1) {
+      _playerTwoNameDisplay.innerHTML = "Computer";
+    } else {
+      _playerTwoNameDisplay.innerHTML = _playerTwoNameInput.value;
+    }
+  }
+
+
+  // display modal new-game is clicked
+  _newGameButton.addEventListener('click', function () {
+    _modal.style.display = 'flex'
+  })
+
+
+
+  // close modal and reset form when click outside of box
+  window.onclick = function (e) {
+    if (e.target == document.querySelector('.bg-modal')) {
+      _modal.style.display = 'none'
+      _playerTwoContainer.style.display = 'none';
+      _form.reset()
+    }
+  }
+
+
+
+  //close modal and reset form when x is clicked
+  _closeButton.addEventListener('click', function () {
+    _modal.style.display = 'none'
+    _playerTwoContainer.style.display = 'none';
+    _form.reset()
+  })
+
+
+
+  // hides player 2 container if single player is selected and sets how many players
+  _radioButtons.forEach(button => {
+    button.addEventListener('click', function (e) {
+      if (e.target.value === "single") {
+        _playerTwoContainer.style.display = 'none';
+        _howManyPlayers = 1
+
+      } else {
+        _playerTwoContainer.style.display = "flex";
+        _howManyPlayers = 2
+      }
+    })
+  });
+
+
+
+  /* start game, checks if name inputs are empty, resets form and any previous game data and calls the setPlayerNames function */
+  _startGameButton.addEventListener('click', function () {
+    if (!_playerOneNameInput.value) return alert('Must enter player name');
+    if (_playerTwoContainer.style.display === "flex" && !_playerTwoNameInput.value) return alert('Must enter player name');
+    _modal.style.display = 'none'
+    setPlayerNames();
+    gamePlay.gameReset();
+    _form.reset()
+    DisplayController.addListeners()
+    DisplayController.renderBoard();
+  })
+
+  return { getHowManyPlayers };
+})();
 
 
 
