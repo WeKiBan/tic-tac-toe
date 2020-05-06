@@ -1,17 +1,21 @@
 //global query selectors.
 const squares = Array.from(document.querySelectorAll('.square'));
+const modal = document.querySelector('.bg-modal');
 
 
 const CreatePlayers = function (symbol) {
-  
+
   // return and update score and return symbol functions for each player
   var _score = 0;
+  var name = undefined;
+  const setName = (playerName) => name = playerName;
+  const getName = () => name;
   const getScore = () => _score;
   const resetScore = () => _score = 0;
   const updateScore = () => _score++
   const getSymbol = () => symbol
 
-  return { resetScore, getSymbol, getScore, updateScore };
+  return { getName, setName, resetScore, getSymbol, getScore, updateScore };
 }
 
 
@@ -35,7 +39,6 @@ const GameBoard = (() => {
   const getGameBoard = () => _currentGameBoard;
   const resetGameBoard = () => {
     _currentGameBoard = ["", "", "", "", "", "", "", "", ""];
-    DisplayController.renderBoard()
   }
 
 
@@ -55,20 +58,102 @@ const GameBoard = (() => {
 
 
 const DisplayController = (() => {
+  //query selector for winner-modal
+  const _winnerModal = document.querySelector('.winner-modal')
+  const _winnerModalText = document.querySelector('.winner-modal-text')
+  const _startAgainBtn = document.querySelector('.restart')
+  const _nextGameButton = document.querySelector(".next-game");
+
+
+ // changes winner modal display to visible and sets text to winners name
+ const announceWinner = (currentTurn) => {
+
+  var winnerName = currentTurn.getName()
+  _winnerModalText.innerHTML = `${winnerName} wins!`;
+  _winnerModal.style.display = "flex";
+  
+}
+
+  // start again button in the modal opens the new game modal and closes the winner modal
+  _startAgainBtn.addEventListener('click', function () {
+    modal.style.display = 'flex'
+    _winnerModal.display = 'none'
+    GameBoard.resetGameBoard();
+    addListeners();
+    gamePlay.setRoundIncomplete();
+    renderBoard();
+    _winnerModal.style.display = "none"
+    GameSetup.playerTwoContainer.style.display = 'none';
+    
+  })
+
+  // resets the board and re-add the event listeners to each square when the next game is started.
+  _nextGameButton.addEventListener('click', function () {
+
+    GameBoard.resetGameBoard();
+    addListeners();
+    gamePlay.setRoundIncomplete();
+    renderBoard();
+    _winnerModal.style.display = "none"
+    
+  });
+
+ 
+
 
   // query selectors for the score display
   const _playerOneScoreDisplay = document.querySelector(".player-one-score")
   const _playerTwoScoreDisplay = document.querySelector(".player-two-score")
-  const _NextGameButton = document.querySelector(".next-game");
+
 
 
   //function loops through current board array and displays it on the page, then updates the score using the player objects.
   const renderBoard = () => {
     for (var i = 0; i < squares.length; i++) {
       squares[i].innerHTML = GameBoard.getGameBoard()[i];
+      squares[i].style.opacity = "";
     }
+  }
+
+  // update the scores display
+  const updateScoresDisplay = () => {
     _playerOneScoreDisplay.innerHTML = gamePlay._playerOne.getScore();
     _playerTwoScoreDisplay.innerHTML = gamePlay._playerTwo.getScore();
+  }
+
+  // lookup array and function to highlight winning line
+  const _winningRowLookup = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ]
+
+  const highLightWinningLine = (row) => {
+    _winningRowLookup[row].forEach(item => {
+      squares[item].style.opacity = 0.6;
+    });
+  }
+
+  // change score container colors on players turn 
+
+  var highlightColor = "#7BE0AD"
+  const displayPlayerInFocus = () => {
+    if (gamePlay.getCurrentTurn().getSymbol() === 'O') {
+      _playerOneScoreDisplay.style.background = highlightColor;
+      _playerOneScoreDisplay.parentNode.style.borderColor = highlightColor;
+      _playerTwoScoreDisplay.style.background = "";
+      _playerTwoScoreDisplay.parentNode.style.borderColor = "";
+    } else if (gamePlay.getCurrentTurn().getSymbol() === 'X') {
+      _playerTwoScoreDisplay.style.background = highlightColor;
+      _playerTwoScoreDisplay.parentNode.style.borderColor = highlightColor;
+      _playerOneScoreDisplay.style.background = "";
+      _playerOneScoreDisplay.parentNode.style.borderColor = "";
+    }
   }
 
 
@@ -84,17 +169,11 @@ const DisplayController = (() => {
   });
 
 
-  // checks to see if game is finished, if finished resets the board and re-add the event listeners to each square when the next game is started.
-  _NextGameButton.addEventListener('click', function () {
-    if(gamePlay.checkRoundComplete) return;
-    GameBoard.resetGameBoard();
-    DisplayController.addListeners();
-    gamePlay.setRoundIncomplete();
-  });
 
 
 
-  return { removeListeners, addListeners, renderBoard }
+
+  return { announceWinner, displayPlayerInFocus, updateScoresDisplay, highLightWinningLine, removeListeners, addListeners, renderBoard }
 })();
 
 
@@ -103,12 +182,13 @@ const DisplayController = (() => {
 const gamePlay = (() => {
 
   // two players saved in objects with scores and symbols attached
-  const _playerOne = CreatePlayers("X");
-  const _playerTwo = CreatePlayers("O");
+  const _playerOne = CreatePlayers("O");
+  const _playerTwo = CreatePlayers("X");
 
   // which players turn it currently is
   var _currentTurn = _playerOne;
-  
+  const getCurrentTurn = () => _currentTurn;
+
 
   // variable to see if round has finished and to reset it to incomplete
   var _roundIsIncomplete = true;
@@ -118,18 +198,18 @@ const gamePlay = (() => {
 
 
   // each turn updates the gameboard then checks to see if there is a win before rendering the display
+  // before updating and changing the current player in focus
   const takeTurn = (e) => {
-
     var _squareLocation = e.target.dataset.sq;
-
     GameBoard.updateGameBoard(_squareLocation, _currentTurn.getSymbol());
-    checkForWin();
     DisplayController.renderBoard();
+    checkForWin();
     updateCurrentTurn();
+    DisplayController.displayPlayerInFocus();
   }
 
 
-  // updates the players for the next turn.  
+  // updates which players turn is next.  
   const updateCurrentTurn = () => {
     if (_currentTurn === _playerOne) {
       _currentTurn = _playerTwo;
@@ -139,16 +219,21 @@ const gamePlay = (() => {
   }
 
 
-  // checks the board for a win if there is a win it updates the score and 
+  // checks the board for a win if there is a win it updates the score, highlights the winning line and 
   // removes the listeners from the board so another turn cannot be played
   // until the next game begins.
   const checkForWin = () => {
+    var _winningRow = 0;
     GameBoard.getWinningCombinations().forEach(combination => {
       if (combination.every(item => item === combination[0] && item !== "")) {
         _currentTurn.updateScore();
+        DisplayController.updateScoresDisplay();
         DisplayController.removeListeners();
         _roundIsIncomplete = false;
+        DisplayController.highLightWinningLine(_winningRow);
+        DisplayController.announceWinner(_currentTurn);
       };
+      _winningRow++
     });
   }
 
@@ -161,7 +246,7 @@ const gamePlay = (() => {
     DisplayController.renderBoard();
   }
 
-  return {setRoundIncomplete, isRoundIncomplete, gameReset, _playerOne, _playerTwo, takeTurn }
+  return { getCurrentTurn, setRoundIncomplete, isRoundIncomplete, gameReset, _playerOne, _playerTwo, takeTurn }
 })()
 
 
@@ -173,13 +258,12 @@ const GameSetup = (() => {
 
   // query selectors for modal
   const _newGameButton = document.querySelector('.new-game')
-  const _modal = document.querySelector('.bg-modal');
   const _form = document.querySelector(".form");
   const _closeButton = document.querySelector('.close');
   const _radioButtons = Array.from(document.querySelectorAll('.radio'))
   const _playerOneNameInput = document.querySelector('.player-one-name-input')
   const _playerTwoNameInput = document.querySelector('.player-two-name-input')
-  const _playerTwoContainer = document.querySelector(".player-two-container")
+  const playerTwoContainer = document.querySelector(".player-two-container")
   const _startGameButton = document.querySelector('.start-button')
 
 
@@ -194,20 +278,23 @@ const GameSetup = (() => {
 
 
 
-  // function to set the player names in the score containers
+  // function to set the player names in the score containers and in the player objects
   const setPlayerNames = () => {
     _playerOneNameDisplay.innerHTML = _playerOneNameInput.value;
+    gamePlay._playerOne.setName(_playerOneNameInput.value);
     if (_howManyPlayers === 1) {
       _playerTwoNameDisplay.innerHTML = "Computer";
+      gamePlay._playerTwo.setName("Computer");
     } else {
       _playerTwoNameDisplay.innerHTML = _playerTwoNameInput.value;
+      gamePlay._playerTwo.setName(_playerTwoNameInput.value);
     }
   }
 
 
   // display modal new-game is clicked
   _newGameButton.addEventListener('click', function () {
-    _modal.style.display = 'flex'
+    modal.style.display = 'flex'
   })
 
 
@@ -215,8 +302,8 @@ const GameSetup = (() => {
   // close modal and reset form when click outside of box
   window.onclick = function (e) {
     if (e.target == document.querySelector('.bg-modal')) {
-      _modal.style.display = 'none'
-      _playerTwoContainer.style.display = 'none';
+      modal.style.display = 'none'
+      playerTwoContainer.style.display = 'none';
       _form.reset()
     }
   }
@@ -225,8 +312,8 @@ const GameSetup = (() => {
 
   //close modal and reset form when x is clicked
   _closeButton.addEventListener('click', function () {
-    _modal.style.display = 'none'
-    _playerTwoContainer.style.display = 'none';
+    modal.style.display = 'none'
+    playerTwoContainer.style.display = 'none';
     _form.reset()
   })
 
@@ -236,11 +323,11 @@ const GameSetup = (() => {
   _radioButtons.forEach(button => {
     button.addEventListener('click', function (e) {
       if (e.target.value === "single") {
-        _playerTwoContainer.style.display = 'none';
+        playerTwoContainer.style.display = 'none';
         _howManyPlayers = 1
 
       } else {
-        _playerTwoContainer.style.display = "flex";
+        playerTwoContainer.style.display = "flex";
         _howManyPlayers = 2
       }
     })
@@ -248,19 +335,23 @@ const GameSetup = (() => {
 
 
 
-  /* start game, checks if name inputs are empty, resets form and any previous game data and calls the setPlayerNames function */
+  /* start game, checks if name inputs are empty, adds event listeners to the board, 
+  resets form and any previous game data and calls the sets players names 
+  and scores*/
   _startGameButton.addEventListener('click', function () {
     if (!_playerOneNameInput.value) return alert('Must enter player name');
-    if (_playerTwoContainer.style.display === "flex" && !_playerTwoNameInput.value) return alert('Must enter player name');
-    _modal.style.display = 'none'
+    if (playerTwoContainer.style.display === "flex" && !_playerTwoNameInput.value) return alert('Must enter player name');
+    modal.style.display = 'none'
     setPlayerNames();
-    gamePlay.gameReset();
     _form.reset()
     DisplayController.addListeners()
-    DisplayController.renderBoard();
+    gamePlay.gameReset();
+    DisplayController.updateScoresDisplay();
+    DisplayController.displayPlayerInFocus();
+
   })
 
-  return { getHowManyPlayers };
+  return {playerTwoContainer: playerTwoContainer, getHowManyPlayers };
 })();
 
 
