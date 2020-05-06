@@ -15,6 +15,7 @@
     font-size: 60px;
     padding: 30px;
     color: #F4F4F8;
+    text-shadow: 4px 4px 3px rgba(150, 150, 150, 1);
 }
 
 .gameboard-container {
@@ -37,9 +38,9 @@
     color: #FE4A49;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 16px 18px 34px -17px rgba(0,0,0,0.75);
+    box-shadow: 16px 18px 34px -17px rgba(0, 0, 0, 0.75);
     margin-left: 10px;
-    margin-right:10px;
+    margin-right: 10px;
 }
 
 .score-container {
@@ -57,22 +58,21 @@
     width: 16%;
     background-color: #F4F4F8;
     text-transform: uppercase;
-    box-shadow: 16px 18px 34px -17px rgba(0,0,0,0.75);
-    
+    box-shadow: 16px 18px 34px -17px rgba(0, 0, 0, 0.75);
 }
 
 .score-num {
     font-size: 70px;
     background-color: rgba(254, 73, 73, 0.849);
-    height:60%;
-    width:85%;
+    height: 60%;
+    width: 85%;
     margin: 0 auto;
-    display:flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     font-size: 90px;
     border-radius: 10px;
-    box-shadow: inset -9px -10px 52px -21px rgba(0,0,0,0.75);
+    box-shadow: inset -9px -10px 52px -21px rgba(0, 0, 0, 0.75);
     color: #F4F4F8;
 }
 
@@ -127,8 +127,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    display:none;
-    
+    display: none;
 }
 
 .modal-content {
@@ -139,11 +138,10 @@
     text-align: center;
     padding: 20px;
     position: relative;
-    display:flex;
-    flex-direction:column;
+    display: flex;
+    flex-direction: column;
     justify-content: flex-start;
 }
-
 
 .close {
     position: absolute;
@@ -154,47 +152,47 @@
     cursor: pointer;
 }
 
-.name-container{
-    margin:5px;
+.name-container {
+    margin: 5px;
     display: flex;
     justify-content: space-around;
-    align-items:center;
-    width:90%;
+    align-items: center;
+    width: 90%;
     margin: 20px auto;
 }
-.name-container input{
-    height:30px;
-    width:190px
+
+.name-container input {
+    height: 30px;
+    width: 190px
 }
 
-.left{
-    margin:15px;
+.left {
+    margin: 15px;
 }
 
-.form{
-    margin:30px 20px 0px 20px;
+.form {
+    margin: 30px 20px 0px 20px;
 }
 
-.game-setup-title{
-    margin-top:50px;
-    font-size:20px;
+.game-setup-title {
+    margin-top: 50px;
+    font-size: 20px;
 }
 
-.player-two-container{
+.player-two-container {
     display: none;
 }
 
-.start-button{
-    width:30%;
-    height:30px;
+.start-button {
+    width: 30%;
+    height: 30px;
     border-radius: 2px;
     margin: 0 auto;
 }
 
-.winning-row{
+.winning-row {
     opacity: 0.6;
 }
-
 
 /* Winning text modal */
 
@@ -208,41 +206,38 @@
     justify-content: center;
     align-items: center;
     display:none;
-    flex-direction:column;
-    
-    
+    flex-direction: column;
 }
 
-.winner-modal-text{
+.winner-modal-text {
     font-size: 60px;
-    margin-top:30px;
+    margin-top: 30px;
     text-align: center;
-    color:white;
-    width:60%;
-    display:flex;
-    justify-content: center; 
-    animation: 0.7s ease-out 0.5s 1 growAndShrink;
+    color: white;
+    width: 60%;
+    display: flex;
+    justify-content: center;
 }
 
-/* .grow-shrink-text{
-    animation: 0.7s ease-out 0.5s 1 growAndShrink;
-} */
+.growAndShrink{
+    animation: 0.8s ease-out 0.5s 1 growAndShrink forwards;
+}
 
 @keyframes growAndShrink {
     0% {
-      transform: scale(1.2);
+        
+        transform: scale(1.2);
     }
     50% {
-      transform: scale(1.5);
+        transform: scale(1.5);
     }
-
     100% {
+       
         transform: scale(1);
     }
-  }
- 
+}
 
-  .winner-modal-buttons{
+.winner-modal-buttons {
     height: 50px;
     width: 70px;
     background-color: #F4F4F8;
@@ -253,10 +248,10 @@
     border: solid #F4F4F8 3px;
     transition: all 0.5s ease;
     cursor: pointer;
-    margin:5px;
-  }
+    margin: 5px;
+}
 
-  .winner-modal-buttons:hover{
-      transform: scale(1.2);
-      border-color: #FE4A49;
-  }
+.winner-modal-buttons:hover {
+    transform: scale(1.2);
+    border-color: #FE4A49;
+}

@@ -70,12 +70,16 @@ const DisplayController = (() => {
 
   var winnerName = currentTurn.getName()
   _winnerModalText.innerHTML = `${winnerName} wins!`;
-  _winnerModal.style.display = "flex";
+  _winnerModal.style.display= "flex";
+  _winnerModalText.classList.add('growAndShrink')
+  
+  
   
 }
 
   // start again button in the modal opens the new game modal and closes the winner modal
   _startAgainBtn.addEventListener('click', function () {
+    GameSetup.resetPlayersToOne();
     modal.style.display = 'flex'
     _winnerModal.display = 'none'
     GameBoard.resetGameBoard();
@@ -275,6 +279,7 @@ const GameSetup = (() => {
   // function to check if game will be multiplayer or single player;
   var _howManyPlayers = 1;
   const getHowManyPlayers = () => _howManyPlayers;
+  const resetPlayersToOne = () => _howManyPlayers = 1;
 
 
 
@@ -295,6 +300,8 @@ const GameSetup = (() => {
   // display modal new-game is clicked
   _newGameButton.addEventListener('click', function () {
     modal.style.display = 'flex'
+    playerTwoContainer.style.display = 'none';
+    resetPlayersToOne();
   })
 
 
@@ -351,7 +358,7 @@ const GameSetup = (() => {
 
   })
 
-  return {playerTwoContainer: playerTwoContainer, getHowManyPlayers };
+  return {resetPlayersToOne, playerTwoContainer: playerTwoContainer, getHowManyPlayers };
 })();
 
 
