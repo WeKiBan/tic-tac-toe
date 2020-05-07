@@ -127,7 +127,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    display: none;
+    display: flex;
 }
 
 .modal-content {
@@ -220,7 +220,7 @@
 }
 
 .growAndShrink{
-    animation: 0.8s ease-out 0.5s 1 growAndShrink forwards;
+    animation: 1s ease-in 0.5s 1 growAndShrink forwards;
 }
 
 @keyframes growAndShrink {

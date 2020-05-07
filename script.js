@@ -65,17 +65,27 @@ const DisplayController = (() => {
   const _nextGameButton = document.querySelector(".next-game");
 
 
- // changes winner modal display to visible and sets text to winners name
- const announceWinner = (currentTurn) => {
+  // changes winner modal display to visible and sets text to winners name
+  const announceWinner = (currentTurn, winningRow) => {
 
-  var winnerName = currentTurn.getName()
-  _winnerModalText.innerHTML = `${winnerName} wins!`;
-  _winnerModal.style.display= "flex";
-  _winnerModalText.classList.add('growAndShrink')
-  
-  
-  
-}
+    var winnerName = currentTurn.getName()
+    _winnerModalText.innerHTML = `${winnerName} wins!`;
+    _winnerModal.style.display = "flex";
+    _winnerModalText.classList.add('growAndShrink')
+    highLightWinningLine(winningRow)
+
+
+
+  }
+
+  // function that announces tie instead of winner
+  const announceTie = (currentTurn, winningRow) => {
+
+    _winnerModalText.innerHTML = "It's a Tie!";
+    _winnerModal.style.display = "flex";
+    _winnerModalText.classList.add('growAndShrink')
+    
+  }
 
   // start again button in the modal opens the new game modal and closes the winner modal
   _startAgainBtn.addEventListener('click', function () {
@@ -83,26 +93,23 @@ const DisplayController = (() => {
     modal.style.display = 'flex'
     _winnerModal.display = 'none'
     GameBoard.resetGameBoard();
-    addListeners();
-    gamePlay.setRoundIncomplete();
     renderBoard();
     _winnerModal.style.display = "none"
     GameSetup.playerTwoContainer.style.display = 'none';
-    
+    gamePlay.resetCurrentTurnAndGameState();
+
   })
 
-  // resets the board and re-add the event listeners to each square when the next game is started.
+  // resets the board after win, resets playerOne to current turn and updates display;
   _nextGameButton.addEventListener('click', function () {
-
     GameBoard.resetGameBoard();
-    addListeners();
-    gamePlay.setRoundIncomplete();
     renderBoard();
     _winnerModal.style.display = "none"
-    
+    gamePlay.resetCurrentTurnAndGameState();
+    displayPlayerInFocus();
   });
 
- 
+
 
 
   // query selectors for the score display
@@ -117,6 +124,7 @@ const DisplayController = (() => {
       squares[i].innerHTML = GameBoard.getGameBoard()[i];
       squares[i].style.opacity = "";
     }
+    updateScoresDisplay();
   }
 
   // update the scores display
@@ -162,28 +170,31 @@ const DisplayController = (() => {
 
 
   // add event listener to each square to allow players to click board to take turn
-  const addListeners = () => squares.forEach(square => {
-    square.addEventListener('click', gamePlay.takeTurn);
+  squares.forEach(square => {
+    square.addEventListener('click', function (e) {
+
+      if (!GameSetup.checkGameStarted() || square.innerHTML !== "") return;
+      var _squareLocation = e.target.dataset.sq
+      gamePlay.takeTurn(_squareLocation)
+
+    });
   });
 
-
-  // remove eventListeners when game is won
-  const removeListeners = () => squares.forEach(square => {
-    square.removeEventListener('click', gamePlay.takeTurn);
-  });
+  //
 
 
 
-
-
-
-  return { announceWinner, displayPlayerInFocus, updateScoresDisplay, highLightWinningLine, removeListeners, addListeners, renderBoard }
+  return { announceTie, announceWinner, displayPlayerInFocus, updateScoresDisplay, highLightWinningLine, renderBoard }
 })();
 
 
 
 
 const gamePlay = (() => {
+  
+  //
+  var gameFinished = false;
+  const resetGameState = () => gameFinished = false;
 
   // two players saved in objects with scores and symbols attached
   const _playerOne = CreatePlayers("O");
@@ -192,26 +203,10 @@ const gamePlay = (() => {
   // which players turn it currently is
   var _currentTurn = _playerOne;
   const getCurrentTurn = () => _currentTurn;
-
-
-  // variable to see if round has finished and to reset it to incomplete
-  var _roundIsIncomplete = true;
-  const isRoundIncomplete = () => _roundIsIncomplete;
-  const setRoundIncomplete = () => _roundIsIncomplete = true;
-
-
-
-  // each turn updates the gameboard then checks to see if there is a win before rendering the display
-  // before updating and changing the current player in focus
-  const takeTurn = (e) => {
-    var _squareLocation = e.target.dataset.sq;
-    GameBoard.updateGameBoard(_squareLocation, _currentTurn.getSymbol());
-    DisplayController.renderBoard();
-    checkForWin();
-    updateCurrentTurn();
-    DisplayController.displayPlayerInFocus();
+  const resetCurrentTurnAndGameState = () => {
+    _currentTurn = _playerOne;
+    gameFinished = false
   }
-
 
   // updates which players turn is next.  
   const updateCurrentTurn = () => {
@@ -223,22 +218,61 @@ const gamePlay = (() => {
   }
 
 
+  // each turn updates the gameboard then checks to see if there is a win before rendering the display
+  // before updating and changing the current player in focus
+  const takeTurn = (_squareLocation) => {
+    GameBoard.updateGameBoard(_squareLocation, _currentTurn.getSymbol());
+    if(!checkForWin()){
+      updateCurrentTurn();
+    } 
+    
+    if(gameFinished === false && _currentTurn.getName() === 'Computer'){
+      setTimeout(computerTurn, 800);
+    }
+
+    DisplayController.renderBoard();
+    DisplayController.displayPlayerInFocus();
+
+  }
+
+
+
+  // computerPlay
+  const computerTurn = () => takeTurn(getAvailableSpaces()[Math.floor(Math.random() * getAvailableSpaces().length)]);;
+
+
+
+  //function to check for available spaces
+
+  const getAvailableSpaces = () => {
+    var freeSpacesArr =[];
+      for(var i = 0; i < GameBoard.getGameBoard().length; i++ ){
+        if(GameBoard.getGameBoard()[i] === ""){
+          freeSpacesArr.push(i)
+        }
+      }
+      return freeSpacesArr;
+  }
+
   // checks the board for a win if there is a win it updates the score, highlights the winning line and 
-  // removes the listeners from the board so another turn cannot be played
-  // until the next game begins.
+
   const checkForWin = () => {
     var _winningRow = 0;
+    var _winner = false
     GameBoard.getWinningCombinations().forEach(combination => {
       if (combination.every(item => item === combination[0] && item !== "")) {
         _currentTurn.updateScore();
-        DisplayController.updateScoresDisplay();
-        DisplayController.removeListeners();
-        _roundIsIncomplete = false;
-        DisplayController.highLightWinningLine(_winningRow);
-        DisplayController.announceWinner(_currentTurn);
-      };
+        DisplayController.announceWinner(_currentTurn, _winningRow);
+        _winner = true;
+        gameFinished = true;
+      }
       _winningRow++
     });
+    if(_winner === false && getAvailableSpaces().length === 0){
+      gameFinished = true;
+      DisplayController.announceTie();
+    }
+    return _winner;
   }
 
 
@@ -250,8 +284,10 @@ const gamePlay = (() => {
     DisplayController.renderBoard();
   }
 
-  return { getCurrentTurn, setRoundIncomplete, isRoundIncomplete, gameReset, _playerOne, _playerTwo, takeTurn }
+  return {resetCurrentTurnAndGameState, checkForWin, updateCurrentTurn, getCurrentTurn, gameReset, _playerOne, _playerTwo, takeTurn }
 })()
+
+
 
 
 
@@ -269,6 +305,8 @@ const GameSetup = (() => {
   const _playerTwoNameInput = document.querySelector('.player-two-name-input')
   const playerTwoContainer = document.querySelector(".player-two-container")
   const _startGameButton = document.querySelector('.start-button')
+  var _gameStarted = false;
+  const checkGameStarted = () => _gameStarted;
 
 
   //selectors for name display in score containers
@@ -351,14 +389,12 @@ const GameSetup = (() => {
     modal.style.display = 'none'
     setPlayerNames();
     _form.reset()
-    DisplayController.addListeners()
     gamePlay.gameReset();
-    DisplayController.updateScoresDisplay();
     DisplayController.displayPlayerInFocus();
-
+    _gameStarted = true;
   })
 
-  return {resetPlayersToOne, playerTwoContainer: playerTwoContainer, getHowManyPlayers };
+  return { checkGameStarted, resetPlayersToOne, playerTwoContainer, getHowManyPlayers };
 })();
 
 
