@@ -69,10 +69,11 @@ const DisplayController = (() => {
   const announceWinner = (currentTurn, winningRow) => {
 
     var winnerName = currentTurn.getName()
+    highLightWinningLine(winningRow)
     _winnerModalText.innerHTML = `${winnerName} wins!`;
     _winnerModal.style.display = "flex";
     _winnerModalText.classList.add('growAndShrink')
-    highLightWinningLine(winningRow)
+    
 
 
 
@@ -84,7 +85,7 @@ const DisplayController = (() => {
     _winnerModalText.innerHTML = "It's a Tie!";
     _winnerModal.style.display = "flex";
     _winnerModalText.classList.add('growAndShrink')
-    
+
   }
 
   // start again button in the modal opens the new game modal and closes the winner modal
@@ -145,9 +146,12 @@ const DisplayController = (() => {
     [2, 4, 6]
   ]
 
+ 
   const highLightWinningLine = (row) => {
+    
     _winningRowLookup[row].forEach(item => {
-      squares[item].style.opacity = 0.6;
+      squares[item].style.opacity = 0.5;
+      console.log(squares[item]);
     });
   }
 
@@ -170,28 +174,34 @@ const DisplayController = (() => {
 
 
   // add event listener to each square to allow players to click board to take turn
-  squares.forEach(square => {
-    square.addEventListener('click', function (e) {
-
-      if (!GameSetup.checkGameStarted() || square.innerHTML !== "") return;
-      var _squareLocation = e.target.dataset.sq
-      gamePlay.takeTurn(_squareLocation)
-
+  const addListeners = () => {
+    squares.forEach(square => {
+      square.addEventListener('click', gamePlay.takeTurn)
     });
-  });
+  }
+
+  // removes the even listeners from each square so cant be pressed before game has started or during computer play
+  const removeListeners = () => {
+    squares.forEach(square => {
+      square.removeEventListener('click', gamePlay.takeTurn)
+    });
+  }
+
+
+
 
   //
 
 
 
-  return { announceTie, announceWinner, displayPlayerInFocus, updateScoresDisplay, highLightWinningLine, renderBoard }
+  return { addListeners, removeListeners, announceTie, announceWinner, displayPlayerInFocus, updateScoresDisplay, highLightWinningLine, renderBoard }
 })();
 
 
 
 
 const gamePlay = (() => {
-  
+
   //
   var gameFinished = false;
   const resetGameState = () => gameFinished = false;
@@ -220,17 +230,32 @@ const gamePlay = (() => {
 
   // each turn updates the gameboard then checks to see if there is a win before rendering the display
   // before updating and changing the current player in focus
-  const takeTurn = (_squareLocation) => {
+  
+  const takeTurn = (eventOrLocation) => {
+    var _squareLocation;
+    // to see if the argument passed is a number or an event
+    if (typeof eventOrLocation === 'number') {
+      _squareLocation = eventOrLocation;
+    } else {
+      if (eventOrLocation.target.innerHTML !== "") return;
+      _squareLocation = eventOrLocation.target.dataset.sq;
+    }
+
     GameBoard.updateGameBoard(_squareLocation, _currentTurn.getSymbol());
-    if(!checkForWin()){
+    DisplayController.renderBoard();
+
+    // checks for win if no one wins updates the current turn this 
+    // stops the computer continuing when game is finished
+    if (!checkForWin()) {
       updateCurrentTurn();
-    } 
-    
-    if(gameFinished === false && _currentTurn.getName() === 'Computer'){
+    }
+
+    if (gameFinished === false && _currentTurn.getName() === 'Computer') {
+      DisplayController.removeListeners()
       setTimeout(computerTurn, 800);
     }
 
-    DisplayController.renderBoard();
+    
     DisplayController.displayPlayerInFocus();
 
   }
@@ -238,24 +263,27 @@ const gamePlay = (() => {
 
 
   // computerPlay
-  const computerTurn = () => takeTurn(getAvailableSpaces()[Math.floor(Math.random() * getAvailableSpaces().length)]);;
+  const computerTurn = () => {
+    takeTurn(getAvailableSpaces()[Math.floor(Math.random() * getAvailableSpaces().length)]);
+    DisplayController.addListeners();
+  }
 
 
 
   //function to check for available spaces
 
   const getAvailableSpaces = () => {
-    var freeSpacesArr =[];
-      for(var i = 0; i < GameBoard.getGameBoard().length; i++ ){
-        if(GameBoard.getGameBoard()[i] === ""){
-          freeSpacesArr.push(i)
-        }
+    var freeSpacesArr = [];
+    for (var i = 0; i < GameBoard.getGameBoard().length; i++) {
+      if (GameBoard.getGameBoard()[i] === "") {
+        freeSpacesArr.push(i)
       }
-      return freeSpacesArr;
+    }
+    return freeSpacesArr;
   }
 
   // checks the board for a win if there is a win it updates the score, highlights the winning line and 
-
+  // announces the winner also checks for a tie and announces tie if board is full
   const checkForWin = () => {
     var _winningRow = 0;
     var _winner = false
@@ -268,7 +296,7 @@ const gamePlay = (() => {
       }
       _winningRow++
     });
-    if(_winner === false && getAvailableSpaces().length === 0){
+    if (_winner === false && getAvailableSpaces().length === 0) {
       gameFinished = true;
       DisplayController.announceTie();
     }
@@ -284,7 +312,7 @@ const gamePlay = (() => {
     DisplayController.renderBoard();
   }
 
-  return {resetCurrentTurnAndGameState, checkForWin, updateCurrentTurn, getCurrentTurn, gameReset, _playerOne, _playerTwo, takeTurn }
+  return { resetCurrentTurnAndGameState, checkForWin, updateCurrentTurn, getCurrentTurn, gameReset, _playerOne, _playerTwo, takeTurn }
 })()
 
 
@@ -391,7 +419,10 @@ const GameSetup = (() => {
     _form.reset()
     gamePlay.gameReset();
     DisplayController.displayPlayerInFocus();
+    DisplayController.removeListeners()
+    DisplayController.addListeners();
     _gameStarted = true;
+
   })
 
   return { checkGameStarted, resetPlayersToOne, playerTwoContainer, getHowManyPlayers };
