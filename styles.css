@@ -19,7 +19,7 @@
 }
 
 .gameboard-container {
-    width: 100%;
+    width: 85%;
     display: flex;
     justify-content: space-evenly;
 }
@@ -27,8 +27,8 @@
 .gameboard {
     min-height: 300px;
     min-width: 300px;
-    height: 50vw;
-    width: 50%;
+    height: 45vw;
+    width: 45vw;
     background-color: #FE4A49;
     display: grid;
     grid-gap: 5px;
